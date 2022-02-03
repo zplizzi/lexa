@@ -432,12 +432,17 @@ class UnnormalizedHuber(tfd.Normal):
 
 class SafeTruncatedNormal(tfd.TruncatedNormal):
 
-  def __init__(self, loc, scale, low, high, clip=1e-6, mult=1):
-    super().__init__(loc, scale, low, high)
-    self._clip = clip
-    self._mult = mult
+  # def __init__(self, loc, scale, low, high, clip=1e-6, mult=1):
+  #   super().__init__(loc, scale, low, high)
+  #   self._clip = clip
+  #   self._mult = mult
+
+  # def _parameter_properties(self):
+  #     super()._parameter_properties()
 
   def sample(self, *args, **kwargs):
+    self._clip = 1e-6
+    self._mult = 1
     event = super().sample(*args, **kwargs)
     if self._clip:
       clipped = tf.clip_by_value(
@@ -553,10 +558,7 @@ class Optimizer(tf.Module):
     metrics[f'{self._name}_loss'] = loss
     metrics[f'{self._name}_grad_norm'] = norm
     if self._mixed:
-      if tf.__version__[:3] == '2.4':
-        metrics[f'{self._name}_loss_scale'] = self._opt.loss_scale
-      else:
-        metrics[f'{self._name}_loss_scale'] = self._opt.loss_scale._current_loss_scale
+      metrics[f'{self._name}_loss_scale'] = self._opt.loss_scale
     return metrics
 
   def _apply_weight_decay(self, varibs):
